@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lootgrave Demo</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font: 16px system-ui, sans-serif;
+      background: #0b0a09;
+      color: #f4e7d0;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: grid;
+      place-items: center;
+    }
+
+    main {
+      width: min(100vw, calc((100vh - 44px) * 16 / 9));
+      width: min(100vw, calc((100dvh - 44px) * 16 / 9));
+    }
+
+    #screen {
+      position: relative;
+      aspect-ratio: 16 / 9;
+      background: #140f0c;
+    }
+
+    #screen:fullscreen {
+      display: grid;
+      place-items: center;
+      background: #000;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    #screen:fullscreen canvas {
+      width: min(100vw, calc(100vh * 16 / 9));
+      height: auto;
+      aspect-ratio: 16 / 9;
+    }
+
+    #loading {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-content: center;
+      gap: 12px;
+      padding: 12px;
+      text-align: center;
+      background: #140f0c;
+    }
+
+    #loading[hidden] { display: none; }
+    progress { width: min(240px, 60vw); margin: auto; accent-color: #c99653; }
+    footer { display: flex; justify-content: flex-end; height: 44px; align-items: center; }
+
+    button {
+      margin-right: 6px;
+      padding: 5px 12px;
+      border: 1px solid #63482d;
+      border-radius: 4px;
+      color: inherit;
+      background: #241911;
+      font: inherit;
+      cursor: pointer;
+    }
+  </style>
+  <script src="Build/asset-parts-f4c7bf16e8aced99.js"></script>
+</head>
+<body>
+  <main>
+    <div id="screen">
+      <canvas id="unity-canvas" width="1920" height="1080" tabindex="0" aria-label="Lootgrave game"></canvas>
+      <div id="loading">
+        <span id="status" role="status">Loading Lootgrave…</span>
+        <progress id="progress" max="1" value="0" aria-label="Game loading progress"></progress>
+      </div>
+    </div>
+    <footer><button id="fullscreen" type="button" hidden>Fullscreen</button></footer>
+  </main>
+  <script>
+    const canvas = document.querySelector("#unity-canvas");
+    const loading = document.querySelector("#loading");
+    const status = document.querySelector("#status");
+    const progress = document.querySelector("#progress");
+    const fullscreen = document.querySelector("#fullscreen");
+    const showError = (error) => {
+      console.error(error);
+      status.textContent = "Lootgrave could not start. Reload to try again.";
+      progress.hidden = true;
+      loading.hidden = false;
+    };
+
+    const config = {
+      arguments: [],
+      dataUrl: "Build/6660b9776a472590d60b498104825bae.data.unityweb",
+      frameworkUrl: "Build/f3f02c48c41b3608fedca2bb3475fbf8.framework.js.unityweb",
+      codeUrl: "Build/183b716e40d2b2d0998136a5a1019b35.wasm.unityweb",
+      streamingAssetsUrl: "StreamingAssets",
+      fullscreenElementID: "screen",
+      companyName: "Lootgrave",
+      productName: "Lootgrave ART023",
+      productVersion: "0.1.0",
+      autoSyncPersistentDataPath: true,
+      devicePixelRatio: Math.min(window.devicePixelRatio || 1, 1.5),
+    };
+
+    const loader = document.createElement("script");
+    loader.src = "Build/294754307a1e74f6f67aaa9c62b463fb.loader.js";
+    loader.onerror = showError;
+    loader.onload = async () => {
+      try {
+        const game = await createUnityInstance(canvas, config, (value) => { progress.value = value; });
+        loading.hidden = true;
+        fullscreen.hidden = !document.fullscreenEnabled;
+        fullscreen.addEventListener("click", () => {
+          canvas.focus();
+          game.SetFullscreen(1);
+        });
+      } catch (error) {
+        showError(error);
+      }
+    };
+    document.body.append(loader);
+  </script>
+</body>
+</html>
