@@ -102,67 +102,6 @@
       loading.hidden = false;
     };
 
-    function migrateDemoSave() {
-      // Unity 6.6 hashes the directory URL without its trailing slash.
-      const namespaces = {
-        "https://lootgrave.com": ["25350b0f78f3d726229f43330401a398", "18b06efb19f6bf75ce5fd4369810812e"],
-        "http://lootgrave.com": ["b9516d33ee97e0ce58b595e24c27c767", "dd0df94d2928d5a98169ee7d6f56b524"],
-      };
-      const paths = namespaces[location.origin];
-      if (!paths || !location.pathname.startsWith("/beta/") || !window.indexedDB) return;
-
-      const [previous, current] = paths.map(hash => `/idbfs/${hash}`);
-      const directory = "/AdventureCheckpoints";
-      const checkpoint = directory + "/adventure-checkpoint";
-      const primary = checkpoint + ".json";
-      const backup = checkpoint + ".backup.json";
-      const pathsToCopy = ["", directory, primary, backup];
-
-      return new Promise((resolve, reject) => {
-        const storageUnavailable = error => error.name === "SecurityError" || error.name === "NotAllowedError";
-        let open;
-        try {
-          open = indexedDB.open("/idbfs");
-        } catch (error) {
-          if (storageUnavailable(error)) resolve();
-          else reject(error);
-          return;
-        }
-        // First-time visitors let Unity create its own database.
-        open.onupgradeneeded = () => open.transaction.abort();
-        open.onerror = () => {
-          if (open.error.name === "AbortError" || storageUnavailable(open.error)) resolve();
-          else reject(open.error);
-        };
-        open.onsuccess = () => {
-          const database = open.result;
-          if (!database.objectStoreNames.contains("FILE_DATA")) {
-            database.close();
-            resolve();
-            return;
-          }
-
-          const transaction = database.transaction("FILE_DATA", "readwrite");
-          transaction.oncomplete = () => { database.close(); resolve(); };
-          transaction.onabort = () => { database.close(); reject(transaction.error); };
-          const files = transaction.objectStore("FILE_DATA");
-          // The two save files sort before the temporary checkpoint file.
-          const saveRange = folder => IDBKeyRange.bound(folder + backup, folder + primary);
-          const betaSave = files.count(saveRange(current));
-          const demoSave = files.count(saveRange(previous));
-          demoSave.onsuccess = () => {
-            if (betaSave.result || !demoSave.result) return;
-            for (const path of pathsToCopy) {
-              const oldFile = files.get(previous + path);
-              oldFile.onsuccess = () => {
-                if (oldFile.result) files.put(oldFile.result, current + path);
-              };
-            }
-          };
-        };
-      });
-    }
-
     const config = {
       arguments: [],
       dataUrl: "Build/6660b9776a472590d60b498104825bae.data.unityweb",
@@ -182,7 +121,6 @@
     loader.onerror = showError;
     loader.onload = async () => {
       try {
-        await migrateDemoSave();
         const game = await createUnityInstance(canvas, config, (value) => { progress.value = value; });
         loading.hidden = true;
         fullscreen.hidden = !document.fullscreenEnabled;
