@@ -51,18 +51,56 @@
     }
 
     #loading {
+      --progress-track: linear-gradient(#100d14, #211720);
+      --progress-fill: linear-gradient(180deg, #f0be70 0%, #bb6b45 23%, #912b39 65%, #5a2029 100%);
       position: absolute;
       inset: 0;
       display: grid;
-      place-content: center;
-      gap: 12px;
-      padding: 12px;
+      grid-template-columns: minmax(0, 1fr);
+      align-content: center;
+      justify-items: center;
+      gap: clamp(6px, 1.3vw, 16px);
+      padding: 8px;
       text-align: center;
-      background: #140f0c;
+      background: radial-gradient(ellipse at 50% 44%, #301a29, #17101f 53%, #0c090e 88%);
     }
 
-    #loading[hidden] { display: none; }
-    progress { width: min(240px, 60vw); margin: auto; accent-color: #c99653; }
+    #loading[hidden], #loading [hidden] { display: none; }
+
+    #loading-coin { width: min(24%, 8.5rem); }
+    #loading-coin img { display: block; width: 100%; height: auto; }
+
+    #status {
+      max-width: 90%;
+      color: #f0debe;
+      font: bold clamp(.75rem, 1.8vw, 1rem) Georgia, serif;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      text-shadow: 0 2px 3px #0c090e;
+    }
+
+    #progress-frame {
+      box-sizing: border-box;
+      width: min(68%, 22rem);
+      padding: 3px 4px;
+      background: linear-gradient(#b09573, #665047 43%, #3e2a25 58%, #785640);
+      clip-path: polygon(9px 0, calc(100% - 9px) 0, 100% 50%, calc(100% - 9px) 100%, 9px 100%, 0 50%);
+    }
+
+    #progress {
+      appearance: none;
+      display: block;
+      width: 100%;
+      height: clamp(8px, 1.3vw, 12px);
+      border: 0;
+      background: var(--progress-track);
+      clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 50%, calc(100% - 6px) 100%, 6px 100%, 0 50%);
+    }
+
+    #progress::-webkit-progress-bar { background: var(--progress-track); }
+    #progress::-webkit-progress-value { background: var(--progress-fill); }
+    #progress::-moz-progress-bar { background: var(--progress-fill); }
+
     footer { display: flex; justify-content: flex-end; height: 44px; align-items: center; }
 
     button {
@@ -76,15 +114,21 @@
       cursor: pointer;
     }
   </style>
-  <script src="Build/asset-parts-17a27f7321167361.js"></script>
+  <script src="Build/asset-parts-12070e2dd17c396c.js"></script>
 </head>
 <body>
   <main>
     <div id="screen">
       <canvas id="unity-canvas" width="1920" height="1080" tabindex="0" aria-label="Lootgrave game"></canvas>
       <div id="loading">
+        <picture id="loading-coin">
+          <source media="(prefers-reduced-motion: reduce)" srcset="loading-coin.png">
+          <img src="loading-coin.gif" width="192" height="192" alt="">
+        </picture>
         <span id="status" role="status">Loading Lootgrave…</span>
-        <progress id="progress" max="1" value="0" aria-label="Game loading progress"></progress>
+        <div id="progress-frame">
+          <progress id="progress" max="1" value="0" aria-label="Game loading progress"></progress>
+        </div>
       </div>
     </div>
     <footer><button id="fullscreen" type="button" hidden>Fullscreen</button></footer>
@@ -92,21 +136,24 @@
   <script>
     const canvas = document.querySelector("#unity-canvas");
     const loading = document.querySelector("#loading");
+    const loadingCoin = document.querySelector("#loading-coin");
     const status = document.querySelector("#status");
+    const progressFrame = document.querySelector("#progress-frame");
     const progress = document.querySelector("#progress");
     const fullscreen = document.querySelector("#fullscreen");
     const showError = (error) => {
       console.error(error);
       status.textContent = "Lootgrave could not start. Reload to try again.";
-      progress.hidden = true;
+      loadingCoin.hidden = true;
+      progressFrame.hidden = true;
       loading.hidden = false;
     };
 
     const config = {
       arguments: [],
-      dataUrl: "Build/ce9a642e6efd19b3582c7625496e6091.data.unityweb",
+      dataUrl: "Build/4dd35c2b44c250fe0ed60a8f01def7a6.data.unityweb",
       frameworkUrl: "Build/f3f02c48c41b3608fedca2bb3475fbf8.framework.js.unityweb",
-      codeUrl: "Build/d7eb95d987a6dc87f7b67d943a257f32.wasm.unityweb",
+      codeUrl: "Build/9b9ed73e8ac33b015155264d14779d61.wasm.unityweb",
       streamingAssetsUrl: "StreamingAssets",
       fullscreenElementID: "screen",
       companyName: "Lootgrave",
@@ -117,7 +164,7 @@
     };
 
     const loader = document.createElement("script");
-    loader.src = "Build/c5ce664bc53dfb6fb6fe918eb1827a40.loader.js";
+    loader.src = "Build/1167183d62da447c8ff0b3f8562dd2d4.loader.js";
     loader.onerror = showError;
     loader.onload = async () => {
       try {
